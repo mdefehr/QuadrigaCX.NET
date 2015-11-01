@@ -8,5 +8,10 @@ namespace QuadrigaCX
 {
     public class QuadrigaAPI
     {
+        private string APIKey;
+        public QuadrigaAPI()
+        {
+            APIKey = "not set";
+        }
     }
 }
