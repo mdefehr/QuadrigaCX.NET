@@ -76,7 +76,6 @@ namespace QuadrigaCX_TestApp
                 MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
             }
         }
-
         private void btnUserTransactions_Click(object sender, EventArgs e)
         {
             QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
@@ -91,7 +90,6 @@ namespace QuadrigaCX_TestApp
                 MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
             }
         }
-
         private void btnOpenOrders_Click(object sender, EventArgs e)
         {
             QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
@@ -106,9 +104,106 @@ namespace QuadrigaCX_TestApp
                 MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
             }
         }
+        private void btnLookupOrder_Click(object sender, EventArgs e)
+        {
+            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
+            try
+            {
+                var order = api.LookupOrder(txtOrderID.Text);
+                frmObjectVisualizer frm = new frmObjectVisualizer(order);
+                frm.Show();
+            }
+            catch (QuadrigaResultError ex)
+            {
+                MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
+            }
+        }
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
+            try
+            {
+                var cancel = api.CancelOrder(txtOrderID.Text);
+                if (cancel == "true")
+                    MessageBox.Show("Cancellation was successful");
+                else
+                    MessageBox.Show(String.Format("Cancellation NOT successful - API returned '{0}'", cancel));
+            }
+            catch (QuadrigaResultError ex)
+            {
+                MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
+            }
+        }
+        private void btnBuyLimit_Click(object sender, EventArgs e)
+        {
+            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
+            try
+            {
+                var tradinginfo = api.GetCurrentTradingInformation(txtOrderBook.Text, chkUseLocalTime.Checked);
+                string msg =
+                    String.Format(
+                        "You will actually be putting a trade order on your account at a price of {0} - the current vwap is {1} ",
+                        txtOrderPrice.Text, tradinginfo.vwap);
+                DialogResult dr;
+                if (Convert.ToDecimal(txtOrderPrice.Text) <= tradinginfo.vwap)
+                {
+                    msg = msg + "this is probably favorable, so this is only a confirmation";
+                    dr = MessageBox.Show(msg, "Are you sure?", MessageBoxButtons.OKCancel, MessageBoxIcon.Asterisk);
+                }
+                else
+                {
+                    msg = "WARNING: " + msg +
+                          "this is probably UNfavorable, so you should really consider cancelling...";
+                    dr = MessageBox.Show(msg, "Are you sure?", MessageBoxButtons.OKCancel,MessageBoxIcon.Error);
+                }
+                if (dr == DialogResult.OK)
+                {
+                    var order = api.BuyOrderLimit(Convert.ToDecimal(txtOrderAmount.Text),
+                        Convert.ToDecimal(txtOrderPrice.Text), txtOrderBook.Text);
+                    frmObjectVisualizer frm = new frmObjectVisualizer(order);
+                    frm.Show();
+                }
+            }
+            catch (QuadrigaResultError ex)
+            {
+                MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
+            }
+        }
+        private void btnSellLimit_Click(object sender, EventArgs e)
+        {
+            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text), txtAPIKey.Text, txtAPISecret.Text);
+            try
+            {
+                var tradinginfo = api.GetCurrentTradingInformation(txtOrderBook.Text, chkUseLocalTime.Checked);
+                string msg =
+                    String.Format(
+                        "You will actually be putting a trade order on your account at a price of {0} - the current vwap is {1} ",
+                        txtOrderPrice.Text, tradinginfo.vwap);
+                DialogResult dr;
+                if (Convert.ToDecimal(txtOrderPrice.Text) >= tradinginfo.vwap)
+                {
+                    msg = msg + "this is probably favorable, so this is only a confirmation";
+                    dr = MessageBox.Show(msg, "Are you sure?", MessageBoxButtons.OKCancel, MessageBoxIcon.Asterisk);
+                }
+                else
+                {
+                    msg = "WARNING: " + msg +
+                          "this is probably UNfavorable, so you should really consider cancelling...";
+                    dr = MessageBox.Show(msg, "Are you sure?", MessageBoxButtons.OKCancel,MessageBoxIcon.Error);
+                }
+                if (dr == DialogResult.OK)
+                {
 
-
-
-
+                    var order = api.SellOrderLimit(Convert.ToDecimal(txtOrderAmount.Text),
+                        Convert.ToDecimal(txtOrderPrice.Text), txtOrderBook.Text);
+                    frmObjectVisualizer frm = new frmObjectVisualizer(order);
+                    frm.Show();
+                }
+            }
+            catch (QuadrigaResultError ex)
+            {
+                MessageBox.Show(String.Format("Code: {0}, Message: {1}", ex.QuadrigaErrorCode, ex.Message));
+            }
+        }
     }
 }

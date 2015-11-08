@@ -153,7 +153,7 @@ namespace QuadrigaCX
 
     public enum OpenOrderStatus
     {
-        Active=0, PartiallyFilled=1
+        Cancelled = -1, Active=0, PartiallyFilled=1, Complete=2
     }
     public enum OpenOrderType
     {
@@ -162,23 +162,32 @@ namespace QuadrigaCX
     public class OpenOrder
     {
         public decimal amount { get; set; }
-        public DateTime datetime { get; set; }
+        public DateTime created { get; set; }
         public string id { get; set; }
         public decimal price { get; set; }
         public OpenOrderStatus status { get; set; }
         public OpenOrderType type { get; set; }
+        public string book { get; set; }
+        public DateTime updated { get; set; }
 
-        public static OpenOrder GetFromJson(dynamic APICallResult)
+        public static OpenOrder GetFromJson(dynamic APICallResult, string book)
         {
-            return new OpenOrder
+            OpenOrder o = new OpenOrder
             {
                 amount = APICallResult.amount,
-                datetime = DateTime.Parse(APICallResult.datetime.ToString()),
                 id = APICallResult.id,
                 price = APICallResult.price,
                 status = APICallResult.status,
-                type = APICallResult.type
+                type = APICallResult.type,
+                book = book
             };
+            try { o.updated = DateTime.Parse(APICallResult.updated.ToString()); }
+            catch (Exception) {}
+            try { o.created = DateTime.Parse(APICallResult.datetime.ToString()); }
+            catch (Exception) { }
+            try { o.created = DateTime.Parse(APICallResult.created.ToString()); }
+            catch (Exception) { }
+            return o;
         }
     }
 }

@@ -39,9 +39,20 @@ namespace QuadrigaCX_TestApp
                 this.Controls.Add(flp);
                 foreach (PropertyInfo property in inObj.GetType().GetProperties())
                 {
-                    if (property.PropertyType == typeof (Decimal) 
-                        || property.PropertyType == typeof(String)
-                        || property.PropertyType == typeof(DateTime))
+                    //if (property.PropertyType == typeof (Decimal) 
+                    //    || property.PropertyType == typeof(String)
+                    //    || property.PropertyType == typeof(DateTime))
+                    
+                    //else 
+                    
+                    
+                    if (property.PropertyType.ToString().Contains("Collection"))
+                    {
+                        DataGridView dgv = new DataGridView();
+                        dgv.DataSource = property.GetValue(inObj);
+                        flp.Controls.Add(dgv);
+                    }
+                    else
                     {
                         Label lbl = new Label();
                         lbl.Text = property.Name;
@@ -50,17 +61,6 @@ namespace QuadrigaCX_TestApp
                         TextBox txt = new TextBox();
                         txt.Text = property.GetValue(inObj).ToString();
                         flp.Controls.Add(txt);
-                    }
-                    else if (property.PropertyType.ToString().Contains("Collection"))
-                    {
-                        DataGridView dgv = new DataGridView();
-                        dgv.DataSource = property.GetValue(inObj);
-                        flp.Controls.Add(dgv);
-                    }
-                    else
-                    {
-                        MessageBox.Show(String.Format("Unrecognized Property Type: {0}",
-                            property.PropertyType.ToString()));
                     }
                 }
             }

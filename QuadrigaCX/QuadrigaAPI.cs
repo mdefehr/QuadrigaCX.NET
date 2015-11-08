@@ -60,6 +60,7 @@ namespace QuadrigaCX
             }
             return l;
         }
+        
         public AccountBalance GetAccountBalance()
         {
             dynamic r = JsonWebRequestWithAuthentication("https://api.quadrigacx.com/v2/balance", "POST");
@@ -89,10 +90,49 @@ namespace QuadrigaCX
             List<OpenOrder> l = new List<OpenOrder>();
             foreach (dynamic tran in r)
             {
-                l.Add(OpenOrder.GetFromJson(tran));
+                l.Add(OpenOrder.GetFromJson(tran, book));
             }
             return l;
         }
+        public IEnumerable<OpenOrder> LookupOrder(string orderid)
+        {
+            string additionaljsonparameters =
+                String.Format(@", ""id"": ""{0}""", orderid);
+            dynamic r = JsonWebRequestWithAuthentication("https://api.quadrigacx.com/v2/lookup_order", "POST", additionaljsonparameters);
+            processError(r);
+            List<OpenOrder> l = new List<OpenOrder>();
+            foreach (dynamic tran in r)
+            {
+                processError(tran);
+                l.Add(OpenOrder.GetFromJson(tran, tran.book.ToString()));
+            }
+            return l;
+        }
+        public string CancelOrder(string orderid)
+        {
+            string additionaljsonparameters =
+                String.Format(@", ""id"": ""{0}""", orderid);
+            dynamic r = JsonWebRequestWithAuthentication("https://api.quadrigacx.com/v2/cancel_order", "POST", additionaljsonparameters);
+            processError(r);
+            return r.ToString();
+        }
+        public OpenOrder BuyOrderLimit(decimal amount, decimal price, string book)
+        {
+            string additionaljsonparameters =
+                String.Format(@", ""amount"": ""{0}"", ""price"": ""{1}"", ""book"": ""{2}""", amount, price, book);
+            dynamic r = JsonWebRequestWithAuthentication("https://api.quadrigacx.com/v2/buy", "POST", additionaljsonparameters);
+            processError(r);
+            return OpenOrder.GetFromJson(r, book);
+        }
+        public OpenOrder SellOrderLimit(decimal amount, decimal price, string book)
+        {
+            string additionaljsonparameters =
+                String.Format(@", ""amount"": ""{0}"", ""price"": ""{1}"", ""book"": ""{2}""", amount, price, book);
+            dynamic r = JsonWebRequestWithAuthentication("https://api.quadrigacx.com/v2/sell", "POST", additionaljsonparameters);
+            processError(r);
+            return OpenOrder.GetFromJson(r, book);
+        }
+
         private void processError(dynamic jsonobject)
         {
             QuadrigaResultError e = null;
