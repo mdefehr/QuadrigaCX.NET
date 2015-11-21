@@ -126,13 +126,13 @@ namespace QuadrigaCX
     }
     public class UserTransaction
     {
-        public decimal cad { get; set; }
-        public decimal btc { get; set; }
+        public decimal? cad { get; set; }
+        public decimal? btc { get; set; }
         public DateTime datetime { get; set; }
-        public decimal fee { get; set; }
-        public int id { get; set; }
+        public decimal? fee { get; set; }
+        public int? id { get; set; }
         public string order_id { get; set; }
-        public decimal rate { get; set; }
+        public decimal? rate { get; set; }
         public UserTransactionType type { get; set; }
 
         public static UserTransaction GetFromJson(dynamic APICallResult)
