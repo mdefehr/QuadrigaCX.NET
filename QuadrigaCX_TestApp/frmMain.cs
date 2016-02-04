@@ -64,7 +64,7 @@ namespace QuadrigaCX_TestApp
 
         private void btnGetAccountBalance_Click(object sender, EventArgs e)
         {
-            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text),txtAPIKey.Text,txtAPISecret.Text);
+            QuadrigaAPI api = new QuadrigaAPI(Convert.ToInt32(txtClientID.Text),txtAPIKey.Text,txtAPISecret.Text, txtNonce.Text);
             try
             {
                 var output = api.GetAccountBalance();

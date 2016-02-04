@@ -7,6 +7,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 
 namespace QuadrigaCX
 {
@@ -25,17 +27,28 @@ namespace QuadrigaCX
         private string APIKey;
         private string Secret;
         private int ClientID;
+        private string Nonce = "";
 
-        public QuadrigaAPI(int inClientID, string inAPIKey, string inSecret)
+        public QuadrigaAPI(int inClientID, string inAPIKey, string inSecret, string inNonce = "") : this()
         {
             APIKey = inAPIKey;
             Secret = inSecret;
             ClientID = inClientID;
+            if (string.IsNullOrWhiteSpace(inNonce))
+                Nonce = "";
+            else
+                Nonce = inNonce;
         }
         public QuadrigaAPI()
         {
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.ServerCertificateValidationCallback += new RemoteCertificateValidationCallback(RemoteCertValidateCallback);
         }
-
+        public static bool RemoteCertValidateCallback(object sender, X509Certificate cert, X509Chain chain, System.Net.Security.SslPolicyErrors error)
+        {
+            return true;
+        }
         public CurrentTradingInformation GetCurrentTradingInformation(string book = "btc_cad", bool localtime = true)
         {
             dynamic r = SimpleJsonWebRequest("https://api.quadrigacx.com/v2/ticker?book=" + book);
@@ -132,7 +145,6 @@ namespace QuadrigaCX
             processError(r);
             return OpenOrder.GetFromJson(r, book);
         }
-
         private void processError(dynamic jsonobject)
         {
             QuadrigaResultError e = null;
@@ -197,12 +209,15 @@ namespace QuadrigaCX
             var webRequest = HttpWebRequest.Create(url) as HttpWebRequest;
             if (webRequest != null)
             {
-                
-                string nonce = Convert.ToInt64(DateTime.Now.Ticks).ToString();
+                string nonce;
+                if (Nonce == "")
+                    nonce = Convert.ToInt64(DateTime.Now.Ticks).ToString();
+                else
+                    nonce = Nonce;
 
                 string message = nonce + ClientID + APIKey;
-                string secrethash = CalculateMD5Hash(Secret).ToLower();
-                string signature = HashEncode(HashHMAC(StringEncode(secrethash), StringEncode(message)));
+                //string secrethash = CalculateMD5Hash(Secret).ToLower();
+                string signature = HashEncode(HashHMAC(StringEncode(Secret), StringEncode(message)));
                 string datastring = "{" + string.Format(@" ""key"": ""{0}"", ""nonce"": ""{1}"", ""signature"": ""{2}""", APIKey, nonce, signature) + additionaljsonparameters + " }";
 
                 webRequest.Method = method;
@@ -222,21 +237,21 @@ namespace QuadrigaCX
             }
             return null;
         }
-        private static string CalculateMD5Hash(string input)
-        {
-            // step 1, calculate MD5 hash from input
-            MD5 md5 = MD5.Create();
-            byte[] inputBytes = Encoding.ASCII.GetBytes(input);
-            byte[] hash = md5.ComputeHash(inputBytes);
+        //private static string CalculateMD5Hash(string input)
+        //{
+        //    // step 1, calculate MD5 hash from input
+        //    MD5 md5 = MD5.Create();
+        //    byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+        //    byte[] hash = md5.ComputeHash(inputBytes);
 
-            // step 2, convert byte array to hex string
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++)
-            {
-                sb.Append(hash[i].ToString("X2"));
-            }
-            return sb.ToString();
-        }
+        //    // step 2, convert byte array to hex string
+        //    StringBuilder sb = new StringBuilder();
+        //    for (int i = 0; i < hash.Length; i++)
+        //    {
+        //        sb.Append(hash[i].ToString("X2"));
+        //    }
+        //    return sb.ToString();
+        //}
         private static string HashEncode(byte[] hash)
         {
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
